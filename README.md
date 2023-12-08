@@ -49,8 +49,8 @@ You need edit the HTML document to specify the MQTT Broker address (eg IP addres
 Using Thonny, for example:
 - Update the firmware if necessary, **make sure to use the '[Pirate-branded](https://github.com/pimoroni/pimoroni-pico/releases)' micropython** (tested using version ```1.21.0```)
 - Edit ```WIFI_CONFIG.py``` to include your WiFi credentials if necessary
-- Edit ```LIGHTJAR_CONFIG.py``` to include your broker details
--Upload the files:
+- Edit ```LIGHTJAR_CONFIG.py``` to include your broker details, ```NUM_LEDS``` etc
+- Upload the files:
    1) ```mqtt_as.py```
    2) ```WIFI_CONFIG.py```
    3) ```LIGHTJAR_CONFIG.py```
