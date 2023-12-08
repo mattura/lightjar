@@ -40,7 +40,7 @@ Restart your MQTT service (check mosquitto.log for errors)
 - Wrap the LEDs around and within the filler material (if using), try to get uniform spacing
 - Stuff the bundle into the jar, try to fill out the corners and space the LEDs evenly - more on the outside than the centre
 - Trail the USB cable out of the jar (you may wish to use Something Sticky(TM) to attach the Plasma Stick to the jar at the back)
-- Check everything works and all (50) LEDs light up
+- Check everything works and all LEDs light up
 
 3) Configure ```lightjar.html```
 You need edit the HTML document to specify the MQTT Broker address (eg IP address or domain name) and the correct port. Ideally copy this to a locally running webserver (on the same network as the MQTT broker of course), but you can use it standalone.
@@ -49,15 +49,14 @@ You need edit the HTML document to specify the MQTT Broker address (eg IP addres
 Using Thonny, for example:
 - Update the firmware if necessary, **make sure to use the '[Pirate-branded](https://github.com/pimoroni/pimoroni-pico/releases)' micropython** (tested using version ```1.21.0```)
 - Edit ```WIFI_CONFIG.py``` to include your WiFi credentials if necessary
-- Edit ```LIGHTJAR_CONFIG.py``` to include your broker details, and check ```NUM_LEDS``` matches your setup
-- Upload the files:
+- Edit ```LIGHTJAR_CONFIG.py``` to include your broker details
+-Upload the files:
    1) ```mqtt_as.py```
    2) ```WIFI_CONFIG.py```
    3) ```LIGHTJAR_CONFIG.py```
    4) ```main.py``` 
 
    to the Plasma Stick
-- Check the settings and fire it up!
 
 ## Use your LightJar
 
