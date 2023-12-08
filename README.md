@@ -1,8 +1,9 @@
 # LightJar
+#### <i>Convey with wizardry!</i>
 
-<img src="redblue.gif">
+<img src="lightjarhtml.png" height="400px"><img src="redblue.gif" height="400px">
 
-A mood light that you can update live using any web browser on your network. This uses MQTT via websockets to send the data. Works with Pimoroni Skully hardware etc. It uses [this lightweight micropython MQTT client](https://github.com/digitalurban/MQTT-Plasma-Stick-2040W/blob/main/mqtt_as.py) by Peter Hinch, and assumes you have an existing MQTT broker on your network.
+A mood light that you can update live using any web browser on your network. This uses MQTT via websockets to send the data. Works with Pimoroni Skully hardware etc. It uses [this](https://github.com/digitalurban/MQTT-Plasma-Stick-2040W/blob/main/mqtt_as.py) lightweight micropython MQTT client by Peter Hinch, and assumes you have an existing MQTT broker on your network.
 
 ## Prerequisites:
 1) MQTT Broker
