@@ -1,0 +1,616 @@
+<!-- lightjar.html - a decorative/mood light controller using MQTT - https://github.com/mattura/lightjar -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+      //You must have a MQTT broker running at the following location:
+      const BROKER_ADDRESS = "YOUR_MQTT_BROKER_IP_ADDRESS_OR_DOMAIN";
+      const BROKER_PORT = 9001;
+      //The following is a custom colour array optimised for the LightJar RGB LEDs
+      //It may be missing your favourite brighter colours, but it works well for the LightJar
+      //Feel free to adjust as necessary for your own ambience
+      const pickerArray = [
+          '#440000',  '#B00000', '#cc0033', '#FF0000', //Reds D->L
+          '#FFFF00',  '#FFA500', '#D2691E', '#8B4513', '#444400',  //Yellows L->D
+          '#000044',  '#0000FF', '#4682B4', '#2E8B57', //Blues D->L
+          '#00FF00', '#009900','#006400', '#004400', '#004444',//Greens L->D
+          '#4B0082', '#8A2BE2', '#7B68EE', //Purples
+          '#87CEEB', '#00FFFF', //Cyans
+          '#DA70D6', '#FF60CF', '#A000A0', '#440044', //Magentas L->D
+          //'#6B8E23', //Drab olive
+          '#CC8E69', '#FFC096', //Warm whites
+          '#CCCCEE', //Cool white
+          '#FFFFFF', '#999999', '#707070', '#444444', '#222222', '#000000', //Whites L->D
+      ]
+      //Speed and intensity preset values for the sliders, maybe don't fiddle too much with these:
+      const speedValues = [1, 2, 3, 5, 12, 30, 255];
+      const intensityvs = [1, 2, 3, 5, 10, 100, 200];
+      const intensityValues = intensityvs.map(value => value / 10000);  //divide intensity by 10k
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LightJar</title>
+  <style>
+    body {
+        font-family: 'Avenir', arial;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+    }
+    #container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        margin: 0px 10px 0px 0px;
+        padding: 4px 10px;
+        font-family: 'Avenir', 'Montserrat', sans-serif;
+        font-weight: bold;
+        font-size: 3em; 
+        user-select: none;
+        border: 2px solid #6a1b9a; /* Purple border */
+        color: #ffffff; /* White text */
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 10px; /* Rounded corners */
+        background-color: #9c27b0; /* Purple background */
+    }
+    h2 {
+        user-select: none;
+        margin: 0px;
+        font-size: 1.2em;
+        font-family: cursive;
+    }
+    #title-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+    }
+    #status-indicator {
+        user-select: none;
+        height: 40px;
+        width: 105px;
+        border-radius: 10px;
+        background-color: red;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        padding: 0 10px;
+        margin: 0 80px 0 10px;
+    }
+    input[type="color"] {
+        margin-left: 5px;
+        display:none;
+    }
+    #convey_button {
+      display: inline-block;
+        display: none;
+      padding: 20px 40px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: 2px solid #6a1b9a; /* Purple border */
+      color: #ffffff; /* White text */
+      border-radius: 10px; /* Rounded corners */
+      transition: color 0.3s ease;
+      background-color: #9c27b0; /* Purple background */
+    }
+    #convey_button:disabled {
+      background: linear-gradient(45deg, violet, indigo, blue, green, yellow, orange, red);
+      background-size: 400% 400%;
+      animation: rainbowMove 4s linear infinite; /* Adjusted animation */
+    }
+    #convey_button:hover {
+      color: #ff4081; /* Pinkish-magenta on hover */
+      transform: scale(1.05);
+    }
+
+    @keyframes rainbowMove {
+      0% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+    .slider {
+      border: 1px solid #ccc;
+      padding: 25px;
+      text-align: center;
+    }
+
+    #speedSlider {
+      width: 80%;
+      margin: 10px auto;
+    }
+
+    .labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .labels input {
+      flex: 1;
+      text-align: center;
+    }
+
+    #selectedValue {
+      margin-top: 10px;
+    }
+    
+    .info-box {
+      background-color: #e6f7ff;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #66b2ff;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 10px;
+      width: 75%;
+      display: none;
+    }
+    .input-container {
+        margin-top: 6px;
+    }
+    .input-container div {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        align-items: center;
+    }
+    .picker-square {
+      width: 40px;
+      height: 40px;
+      margin: 2px;
+      cursor: pointer;
+      border: 1px solid #000;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    /* TODO: star shaped?  */
+    .picker-star {
+      width: 40px;
+      height: 40px;
+      margin: 2px;
+      cursor: pointer;
+      border: 1px solid #000;
+      border-radius: 5px;
+      display: inline-block;
+    }
+
+    .selected {
+        outline: 3px solid #000;
+        transform: scale(1.05);
+    }
+    .grid-container {
+      display: grid;
+      text-align: center;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    /* small screen (mobile): vertical layout */
+    @media (max-width: 900px) {
+      .grid-container {
+        grid-template-columns: repeat(1, 1fr);
+        gap: 2px;
+      }
+      h1 {font-size: 2em;margin: 0px;}
+      h2 {font-size: 0.9em;}
+      #status-indicator {margin: 0px 20px 0px 0px;}
+      .picker-square {margin:0px;border-radius:0px;}
+      .picker-star {margin:0px;border-radius:1px;}
+      .slider {padding: 6px 25px;}
+      #convey_button {display:none;}
+    }
+    /* large screen: spread out the bottom element */
+    @media (min-width: 900px) {
+      .grid-container > :last-child {
+          grid-column: span 2;
+          justify-self: center;
+          width: 60%;
+      }
+    }
+  </style>
+  <script src="mqtt.min.js"></script>
+</head>
+<body>
+  <div id="container">
+      <div id="title-container">
+        <div><h1>LightJar</h1><h2>Convey with wizardry!</h2></div>
+        <svg id="jar" xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="27 20 41 47">
+            <!-- Jar Body -->
+            <rect x="28" y="26" width="40" height="40" rx="8" fill="#85C1E9" />
+            <!-- Lid -->
+            <rect x="33" y="21" width="30" height="5" rx="2.5" fill="#808B96" />
+            <!-- Random multicoloured LEDs -->
+            <polygon points="32,40 34,43 36,40" class="svg_cyan" />
+            <polygon points="38,38 40,41 42,38" class="svg_magenta" />
+            <polygon points="32,46 34,49 36,46" class="svg_yellow" />
+            <polygon points="38,44 40,47 42,44" class="svg_white" />
+            <polygon points="43,40 45,43 47,40" class="svg_green" />
+            <polygon points="49,38 51,41 53,38" class="svg_green" />
+            <polygon points="43,46 45,49 47,46" class="svg_red" />
+            <polygon points="49,44 51,47 53,44" class="svg_magenta" />
+            <polygon points="54,40 56,43 58,40" class="svg_cyan" />
+            <polygon points="60,38 62,41 64,38" class="svg_magenta" />
+            <polygon points="54,46 56,49 58,46" class="svg_red" />
+            <polygon points="60,44 62,47 64,44" class="svg_white" />
+            <polygon points="32,52 34,55 36,52" class="svg_green" />
+            <polygon points="38,50 40,53 42,50" class="svg_blue" />
+            <polygon points="43,52 45,55 47,52" class="svg_red" />
+            <polygon points="49,50 51,53 53,50" class="svg_blue" />
+            <polygon points="54,46 56,49 58,46" class="svg_cyan" /> 
+            <polygon points="60,44 62,47 64,44" class="svg_magenta" /> 
+            <polygon points="54,52 56,55 58,52" class="svg_yellow" /> 
+            <polygon points="60,50 62,53 64,50" class="svg_white" /> 
+            <polygon points="32,58 34,61 36,58" class="svg_blue" /> 
+            <polygon points="38,56 40,59 42,56" class="svg_blue" /> 
+            <polygon points="43,58 45,61 47,58" class="svg_cyan" /> 
+            <polygon points="49,56 51,59 53,56" class="svg_magenta" /> 
+            <polygon points="54,58 56,61 58,58" class="svg_yellow" /> 
+            <polygon points="60,56 62,59 64,56" class="svg_blue" /> 
+        </svg>
+        <div id="status-indicator">Please wait</div>
+        
+    </div>
+    <div id="help-msg" class="info-box"></div>
+    <div class="grid-container">
+        <div class="input-container">
+            <label for="base_colour">Base Colour:</label>
+            <input type="color" id="base_colour" value="#ff0000">
+            <div id="base_picker"></div>
+        </div>
+        <div class="input-container">
+            <label for="sparkle_colour">Sparkle Colour:</label>
+            <input type="color" id="sparkle_colour" value="#00ff00">
+            <div id="sparkle_picker"></div>
+        </div>
+        <div class="slider">
+          <div>Fade In</div>
+          <div class="labels">
+            <div>Slow</div>
+            <input type="range" id="fadeupSlider" min="0" step="1">
+            <div>Fast</div>
+          </div>
+        </div>
+        <div class="slider">
+          <div>Fade Out</div>
+          <div class="labels">
+            <div>Slow</div>
+            <input type="range" id="fadedownSlider" min="0" step="1">
+            <div>Fast</div>
+          </div>
+        </div>
+        <div class="slider">
+          <div>Intensity</div>
+          <div class="labels">
+              <div>Less</div>
+              <input type="range" id="intensitySlider" min="0" step="1">
+              <div>More</div>
+          </div>
+        </div>
+    </div>
+  <button id='convey_button' onclick="sendColours()">Convey with wizardry!</button>
+  </div>
+  <script>
+    //Configure the sliders:
+    document.getElementById('fadeupSlider').max = speedValues.length - 1;
+    document.getElementById('fadedownSlider').max = speedValues.length - 1;
+    document.getElementById('intensitySlider').max = intensityValues.length - 1;
+    //Draw the colour picker:
+    function pickColour(sq, prefix, key, colour) {
+        if (!sq.classList.contains('selected')) { //check the colour is not already picked
+            //console.log('picked:'+colour)
+            document.querySelectorAll('[id^="'+prefix+'"]').forEach(element => {
+                element.classList.remove('selected');
+            });
+            sq.classList.add('selected');
+            const payload = {type: 'sparkle'}
+            const col = pickerArray[pickerArray.indexOf(colour)]
+            payload[key] = hexToRgb(col);
+            client.publish(topic, JSON.stringify(payload), { qos }, (error) => {
+                if (error) {
+                    console.error(error)
+                }
+            })
+        }
+        ignore();
+    }
+    function ignore() { //ignore incoming messages for a short duration
+        const duration = 2;
+        ignoreIncoming = true;
+        setTimeout(function () {
+            ignoreIncoming = false
+        }, duration * 1000);
+    }
+    
+    //Touch and click events:
+    let isDragging = false;
+    function handleStart(event) {
+        isDragging = true;
+        handleMove(event.target);
+        event.preventDefault();
+    }
+    function handleMove(target) {
+        if (target.classList.contains('picker-square') || target.classList.contains('picker-star')) {
+            const colour = target.id.split('_')[1]
+            if (target.id.startsWith('b_')) {   //base colour
+                pickColour(target, 'b_', "basecolour", colour);
+            } else {
+                pickColour(target, 's_', "sparklecolour", colour);
+            }
+        }
+        //event.preventDefault();
+    }
+    function handleEnd() {
+        isDragging = false;
+    }
+    function addEventListeners(item) {
+        item.addEventListener('mousedown', handleStart);
+        item.addEventListener('touchstart', handleStart);
+    }
+    //One-time end dragging handlers:
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    document.addEventListener('touchend', (event) => {
+        isDragging = false;
+        //event.preventDefault();   //kills some browsers
+    });
+    document.addEventListener("touchmove", (event) => { //drag paint
+        if (isDragging) {
+            const touch = event.touches[0];
+            const x = touch.clientX;
+            const y = touch.clientY;
+            const elementUnderFinger = document.elementFromPoint(x, y);
+            if (elementUnderFinger) {
+                handleMove(elementUnderFinger);
+            }
+        }
+        //event.preventDefault();   //not necessary: touch-action:none
+    });
+
+    const basePicker = document.getElementById('base_picker');
+    const sparklePicker = document.getElementById('sparkle_picker');
+    pickerArray.forEach((colour, index) => {
+      const b_square = document.createElement("div");
+      const s_square = document.createElement("div");
+      b_square.className = "picker-square";
+      b_square.style.backgroundColor = colour;
+      b_square.id = 'b_'+colour;
+      addEventListeners(b_square);
+      basePicker.appendChild(b_square);
+      s_square.className = "picker-star";
+      s_square.style.backgroundColor = colour;
+      s_square.id = 's_'+colour
+      addEventListeners(s_square);
+      sparklePicker.appendChild(s_square);
+    });
+    
+    //MQTT Configuration:
+    var websock = 'ws://';
+    if (window.location.protocol=='https:') {websock='wss://';}
+    const broker = BROKER_ADDRESS; //'192.168.1.7';
+    const port = BROKER_PORT; //9001;
+    const mqttpath = '';
+    const topic = 'LIGHTJAR';
+    const topicres = 'LIGHTJAR/ALIVE';
+    const qos = 0
+    const clientId = 'lightjar_web_' + Math.random().toString(16).substring(2, 8)
+    const connectUrl = websock+broker+':'+port+mqttpath
+    const options = {
+        keepalive: 30,
+        clientId: clientId,
+        clean: true,
+        connectTimeout: 5000,
+        //username: 'user',
+        //password: 'pass',
+        reconnectPeriod: 1000,
+    }
+    var lastmessagereceived = 0;
+    var helptimeout;
+    var ignoreIncoming = false; //to ignore incoming messages just after a publish
+    const helpInterval = 9000; //milliseconds before showing the help text - should be long enough to allow reconnection protocols to complete
+    var idletimeout;
+    //Connect the client:
+    console.log('Connecting to mqtt client...')
+    client = mqtt.connect(connectUrl, options)
+    
+    client.on('error', (err) => {
+        console.log('Connection error: ', err)
+        showConnected(3);
+        client.end()
+    })
+    client.on('reconnect', () => {
+        showConnected(3);
+        console.log('Reconnecting...')
+    })
+    client.on('connect', () => {
+        console.log('Client connected:' + clientId)
+        showConnected(2);
+        client.subscribe(topicres, { qos }, (error) => {
+            if (error) {
+                console.log('Subscribe error:', error)
+                return
+            }
+            console.log(`Subscribed to topic ${topicres}`)
+        })
+        
+    })
+    client.on('message', (topicres, payload) => {
+        if (!ignoreIncoming) {
+            //console.log('Received Message: ' + payload.toString() + '\nOn topic: ' + topicres)
+            try {
+                js = JSON.parse(payload);
+            } catch (e) {
+                showHelp("Garbled message received from LightJar! See console for details.")
+                console.log(payload.toString())
+                return console.error(e);
+            }
+            lastmessagereceived = new Date().getTime();
+            showConnected(1);
+            clearTimeout(idletimeout);
+            idletimeout = setTimeout(() => {showConnected(2);}, 5000);
+            if ("basecolour" in js) {
+                drawBorder('b_', js["basecolour"]);
+            }
+            if ("sparklecolour" in js) {
+                drawBorder('s_', js["sparklecolour"]);
+                
+            }
+            setSlider(js, "fadeup", speedValues);
+            setSlider(js, "fadedown", speedValues);
+            setSlider(js, "intensity", intensityValues);
+        }
+    })
+    function setSlider(js, key, vals) {
+        const sl = document.getElementById(key+'Slider');
+        if (key in js) {
+            if (vals.includes(js[key])) {
+                sl.value = vals.indexOf(js[key])
+            }
+        }
+    }
+    function drawBorder(prefix, bc) {
+        if ("r" in bc && "g" in bc && "b" in bc) {
+            document.querySelectorAll('[id^="'+prefix+'"]').forEach(element => {
+                element.classList.remove('selected');
+            });
+            const hex = rgbToHex(bc.r, bc.g, bc.b);
+            if (prefix=='b_') {document.getElementById('base_colour').value = hex;}
+            else {document.getElementById('sparkle_colour').value = hex;}
+            if (pickerArray.includes(hex)) {
+                document.querySelectorAll('[class^="'+prefix+'"]').forEach(element => {
+                    element.classList.remove('selected');
+                });
+                document.getElementById(prefix+hex).classList.add('selected');
+            } else {console.log(hex+' not in array')}
+            //Set the LightJar svg:
+            document.querySelectorAll('[class^="svg_"]').forEach(element => {
+                /*  //Random rotations??
+                const fx = element.points[1].x
+                const fy = element.points[0].y+2
+                let deg = Math.floor(Math.random() * 36)*10;
+                element.style.transformOrigin = fx+'px '+fy+'px'
+                element.style.transform = 'rotate('+deg+'deg)'
+                */
+                if (prefix=='b_') {
+                    element.style.fill = hex;
+                } else {
+                    const randomNumber = Math.floor(Math.random() * 100);
+                    if (randomNumber < 25) {    //<--this should depend on intensity
+                        element.style.fill = hex;
+                    }
+                }
+            });
+        }
+    }
+    function showHelp(msg) {
+        const helpmsg = document.getElementById('help-msg');
+        helpmsg.style.display = 'block';
+        helpmsg.textContent = msg;
+    }
+    function hideHelp() {
+        const helpmsg = document.getElementById('help-msg');
+        helpmsg.style.display = 'none';
+    }
+    function showConnected(status) {
+        const statusIndicator = document.getElementById('status-indicator');
+        switch (status) {
+            case 1: //Incoming recent messages
+                statusIndicator.textContent = 'Connected';
+                statusIndicator.title = '';
+                statusIndicator.style.backgroundColor = 'green';
+                clearTimeout(helptimeout);
+                hideHelp();
+                break;
+            case 2: //Broker live but no incoming messages
+                statusIndicator.textContent = 'Not Detected';
+                statusIndicator.title = 'The broker is connected, but no LightJar was detected (is it switched on? Are the LEDs active?) Or there is a fault in the code!';
+                statusIndicator.style.backgroundColor = '#ff9500';
+                helptimeout = setTimeout(() => {showHelp(statusIndicator.title)}, helpInterval);
+                break;
+            case 3: //No broker
+                statusIndicator.textContent = 'Disconnected';
+                statusIndicator.title = 'No broker found on network or you are connected to the incorrect network!';
+                statusIndicator.style.backgroundColor = 'red';
+                helptimeout = setTimeout(() => {showHelp(statusIndicator.title)}, helpInterval);
+                break;
+            default:
+                statusIndicator.textContent = 'Unknown Status';
+                statusIndicator.title = 'Undefined state reached - something is very wrong here!';
+                statusIndicator.style.backgroundColor = 'gray';
+                helptimeout = setTimeout(() => {showHelp(statusIndicator.title)}, helpInterval);
+                break;
+        }
+    }
+    function hexToRgb(hex) {
+        const bigint = parseInt(hex.slice(1), 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return { r, g, b };
+    }
+    function rgbToHex(r, g, b) {
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
+        const hex = ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        return '#' + hex.toUpperCase();
+    }
+    function sendColours() { //This will be phased out in favour of individual payloads for each input
+        document.getElementById('convey_button').disabled = true;
+        const bcol = document.getElementById('base_colour').value;
+        const scol = document.getElementById('sparkle_colour').value;
+        const fadeupSlider = document.getElementById('fadeupSlider');
+        const fadedownSlider = document.getElementById('fadedownSlider');
+        const intensitySlider = document.getElementById('intensitySlider');
+        const payload = {
+            type: 'sparkle',
+            basecolour: hexToRgb(bcol),
+            sparklecolour: hexToRgb(scol),
+            fadeup: speedValues[fadeupSlider.value],
+            fadedown: speedValues[fadedownSlider.value],
+            intensity: intensityValues[intensitySlider.value]
+        };
+        client.publish(topic, JSON.stringify(payload), { qos }, (error) => {
+            if (error) {
+                console.error(error)
+            }
+        })
+        const duration = 2;
+        ignoreIncoming = true;
+        setTimeout(function () {
+            //ignore incoming messages for the duration only
+            ignoreIncoming = false
+            document.getElementById('convey_button').disabled = false;
+        }, duration * 1000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('fadeupSlider').addEventListener('input', function () {
+            //to convert to slider only publish...
+            sendColours()
+        });
+        document.getElementById('fadedownSlider').addEventListener('input', function () {
+            sendColours()
+        });
+        document.getElementById('intensitySlider').addEventListener('input', function () {
+            sendColours()
+        });
+    });
+  </script>
+</body>
+</html>
