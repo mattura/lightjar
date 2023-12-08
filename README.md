@@ -57,7 +57,7 @@ Using Thonny, for example:
    3) ```LIGHTJAR_CONFIG.py```
    4) ```main.py``` 
 
-   to the Plasma Stick
+   to the Plasma Stick. Run the code while in Thonny to check for errors. Make sure the MQTT broker is running first!
 
 ## Use your LightJar
 
