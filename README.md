@@ -49,15 +49,15 @@ You need edit the HTML document to specify the MQTT Broker address (eg IP addres
 Using Thonny, for example:
 - Update the firmware if necessary, **make sure to use the '[Pirate-branded](https://github.com/pimoroni/pimoroni-pico/releases)' micropython** (tested using version ```1.21.0```)
 - Edit ```WIFI_CONFIG.py``` to include your WiFi credentials if necessary
-- Edit ```MQTT_CONFIG.py``` to include your broker details
--Upload the files:
-   1) ```mqtt_as.py``` library (from [this MQTT Client](https://github.com/digitalurban/MQTT-Plasma-Stick-2040W) by Peter Hinch)
+- Edit ```LIGHTJAR_CONFIG.py``` to include your broker details, and check ```NUM_LEDS``` matches your setup
+- Upload the files:
+   1) ```mqtt_as.py```
    2) ```WIFI_CONFIG.py```
-   3) ```MQTT_CONFIG.py```
+   3) ```LIGHTJAR_CONFIG.py```
    4) ```main.py``` 
 
    to the Plasma Stick
-- Check the settings (```NUM_LEDS``` etc) and save the ```main.py``` file on the RPi.
+- Check the settings and fire it up!
 
 ## Use your LightJar
 
