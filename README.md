@@ -3,9 +3,9 @@
 
 <img src="lightjarhtml.png" height="400px"><img src="redblue.gif" height="400px">
 
-A mood light that you can update live using any web browser on your network. This uses MQTT via websockets to send the data. Works with Pimoroni Skully hardware etc. It uses [this](https://github.com/digitalurban/MQTT-Plasma-Stick-2040W/blob/main/mqtt_as.py) lightweight micropython MQTT client by Peter Hinch, and assumes you have an existing MQTT broker on your network.
+A decorative/mood light that you can update live using any web browser on your network. This uses MQTT via websockets to send the data. Works with Pimoroni Skully hardware etc. It uses [this](https://github.com/digitalurban/MQTT-Plasma-Stick-2040W/blob/main/mqtt_as.py) lightweight micropython MQTT client by Peter Hinch, and assumes you have an existing MQTT broker on your network. Essentially, this project takes code from the [Pimoroni examples](https://github.com/pimoroni/pimoroni-pico/tree/main/micropython/examples/plasma_stick) (sparkles.py) and makes it easier to change the colour/intensity/fade settings via a colourful web interface. You don't need to know code or Thonny to change the ambience, and anyone on the network can join in (or have a colour fight!)
 
-## Prerequisites:
+## Requirements:
 1) MQTT Broker
 
 You must have a broker on the network you wish to use. I am using Mosquitto which is running on my Synology NAS. This must be configured to use websockets on a specified port.
@@ -46,6 +46,7 @@ Restart your MQTT service (check mosquitto.log for errors)
 You need edit the HTML document to specify the MQTT Broker address (eg IP address or domain name) and the correct port. Ideally copy this to a locally running webserver (on the same network as the MQTT broker of course), but you can use it standalone.
 
 4) Upload the code!
+   
 Using Thonny, for example:
 - Update the firmware if necessary, **make sure to use the '[Pirate-branded](https://github.com/pimoroni/pimoroni-pico/releases)' micropython** (tested using version ```1.21.0```)
 - Edit ```WIFI_CONFIG.py``` to include your WiFi credentials if necessary
@@ -59,6 +60,8 @@ Using Thonny, for example:
    to the Plasma Stick
 
 ## Use your LightJar
+
+Open ```lightjar.html``` in a browser. All being well the 'Connected' indicator should be green!
 
 Use the colour pickers and sliders to send different light patterns to the LightJar. The values are transmitted over MQTT to the LightJar (as you change them), which then sets the parameters accordingly.
 
