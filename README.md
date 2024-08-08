@@ -26,10 +26,10 @@ You can obtain the following components separately, or get [the full kit](https:
 
 You need a large glass jar or vase (mine is from a Swedish furniture shop), though 50 LEDs can more-or-less fit in an empty(!) 70cl rum bottle.
 
-You also need some filler material, to diffuse and soften the light, and space out the LEDs. I found some gold fabric mesh, but you could try crumpled tracing paper, bubblewrap, fabrics, hessian, sackcloth etc! The colour of the material will affect the tone of the LEDs slightly (eg my gold mesh makes the whites warmer)
+You also need some filler material, to diffuse and soften the light, and space out the LEDs. I found some gold mesh fabric, but you could try crumpled tracing paper, bubblewrap, fabrics, hessian, sackcloth etc! The colour of the material will affect the tone of the LEDs slightly (eg my gold mesh makes the whites warmer)
 
-<img src="gold_mesh.jpg" height="300px">
-<em>A roll of gold mesh fabric works well to diffuse and warm the LEDs</em>
+<img src="gold_mesh_crop.jpg" height="300px">
+<em>A roll of gold mesh works well to diffuse and warm the LEDs</em>
 
 ## Setup
 
